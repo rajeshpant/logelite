@@ -1,114 +1,36 @@
 <?php 
-$page_title = 'Task List';
+$page_title = 'View Task';
 include('config.php');
 hasAccess('task_list');
-$user_id = $_SESSION['user']['id'];
-if($_SESSION['user']['role_id']==3){
-  $results = Task::getTaskByUser($user_id);
-} else {
-  $results = Task::getTask();
-}
-if(isset($_FILES['files'])){
-  $uploads_dir = "upload";
-    $tmp_name = $_FILES["files"]["tmp_name"];
-    $name = date('YmdHis').'_'.basename($_FILES["files"]["name"]);
-    move_uploaded_file($tmp_name, "$uploads_dir/$name");
-    Task::updateComment($_POST['task_id'], $_POST['comment'], $name);
-  die('1');
-} else if(!empty($_POST['task_id'])){
-    Task::deleteTask($_POST['task_id']);
-    echo 1;
-    die;
-} else if(isset($_POST['status'])){
-    Task::updateStatus($_POST['id'], $_POST['status']);
-    echo 1;
-    die;
-} else if(isset($_POST['assign_task_id'])){
-  echo json_encode(Task::getTaskTeam($_POST['assign_task_id']));
-  die;
-} else if(isset($_POST['id'])){
-  Task::assignTeam($_POST);
-  header('location: tasks.php');
-} 
-$teams =  Team::getTeam();
+$results = Task::getTaskById($_GET['id']);
 include('header.php');
 include('header.inc'); 
 include('left.inc');
 ?>
 <main id="main" class="main">
 <div class="pagetitle">
-  <h1>Task List</h1>
+  <h1>View Task</h1>
   <nav>
     <ol class="breadcrumb">
       <li class="breadcrumb-item"><a href="/">Home</a></li>
-      <li class="breadcrumb-item active">Task List</li>
+      <li class="breadcrumb-item"><a href="tasks.php">Task</a></li>
+      <li class="breadcrumb-item active">View Task</li>
     </ol>
   </nav>
 </div>
 <section class="section">
   <div class="row">
-    <div class="col-lg-12">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">Task List</h5>
-          <table class="table datatable">
-            <thead>
-              <tr>
-                <th>Task Id</th>
-                <th>Title</th>
-                <th>Priority</th>
-                <th>Due Date</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-                <?php 
-                if(!empty($results)){ 
-                    foreach($results as $result){    
-                ?>
-              <tr>
-                <td><?php echo $result['id'];?></td>
-                <td><?php echo $result['title'];?></td>
-                <td><?php echo $result['priority'];?></td>
-                <td><?php echo $result['due_date'];?></td>
-                <td>
-                  <?php if($result['status'] !=1) {
-                     if($_SESSION['user']['role_id'] == 3) { ?>
-                      <select id="status" name="status" class="form-select task_status" required data-id="<?php echo $result['id'];?>" onchange="update_status(<?php echo $result['id'];?>, this.value)">
-                          <option>Choose Status...</option>
-                          <?php foreach($task_status as $key => $val) { ?>
-                          <option value="<?php echo $key; ?>"  <?php echo (isset($result['status']) && $result['status'] == $key) ? 'selected' :'' ?>><?php echo $val; ?></option>
-                          <?php } ?>
-                      </select>
-                  <?php }  else { ?>
-                    <?php echo $task_status[$result['status']]; ?> <a href="javascript:" onclick="update_status(<?php echo $result['id'];?>, 1, 0)">Complete Task</a>
-                    <?php } } else { ?>
-                      Completed
-                      <?php } ?>                  
-                </td>
-                <td>
-                <?php if($_SESSION['user']['role_id'] == 1 || Role::checkAccess($_SESSION['user']['role_id'], 'assign_team_task', 1)) { ?>
-                    <a href="javascript:" onclick="assign_team(<?php echo $result['id'];?>)">Assign Team</a> |
-                  <?php } ?>
-                  <?php if($_SESSION['user']['role_id'] == 1 || Role::checkAccess($_SESSION['user']['role_id'], 'task_edit', 1)) { ?>
-                    <a href="add_task.php?id=<?php echo $result['id'];?>">Edit</a> |
-                  <?php } ?>
-                  <?php if($_SESSION['user']['role_id'] == 1 || Role::checkAccess($_SESSION['user']['role_id'], 'delete_task', 1)) { ?>
-                    <a href="javascript:" onclick="delete_task(<?php echo $result['id'];?>)">Delete</a>
-                  <?php } ?>
-                  <?php if(!empty($result['comment'])) { ?>
-                    | <a href="view_task.php?id=<?php echo $result['id'];?>">View Task</a>
-                  <?php } ?>
-                  </td>
-              </tr>
-              <?php } } ?>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div class="col-lg-3">Task Name</div>
+    <div class="col-lg-3"><?php echo $results['name'] ?></div>
     </div>
-  </div>
+    <div class="row">
+    <div class="col-lg-3">Comment</div>
+    <div class="col-lg-3"><?php echo $results['comment'] ?></div>
+    </div>
+    <div class="row">
+    <div class="col-lg-3">File</div>
+    <div class="col-lg-3"><a href="upload/<?php echo $results['file'] ?>" download=""><?php echo $results['file'] ?></a></div>
+    </div>
 </section>
 </main>
 <div class="modal fade" id="completeTask" tabindex="-1">
