@@ -1,6 +1,7 @@
 <?php 
 $page_title = !empty($_GET['id']) ? 'Edit Task' : 'Add Task';
 include('config.php');
+hasAccess('add_team');
 if(!empty($_POST)){
     Task::saveTask($_POST);
     header('location: tasks.php');

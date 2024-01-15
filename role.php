@@ -1,6 +1,7 @@
 <?php 
 $page_title = 'Role';
 include('config.php');
+hasAccess('role');
 if(!empty($_GET['action'])){
     echo json_encode(Role::getRole());
     die;

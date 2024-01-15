@@ -75,4 +75,26 @@ class Team extends DB
         }
         return $results;
     }
+
+    public static function assignTeam($data){
+        $user_id = self::getTeamUser($data['id']);
+        $del_user = array_diff($user_id, $data['user']);
+        $add_user = array_diff($data['user'], $user_id);
+        if(!empty($add_user)){
+            foreach($add_user as $user){
+                $stmt = DB::$connection->prepare('INSERT INTO team_members (`user_id`, `team_id`) VALUES (?, ?)');
+                $stmt->bind_param("ii", $user, $data['id']);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+        if(!empty($del_user)){
+            foreach($del_user as $user){
+                $stmt = DB::$connection->prepare('DELETE FROM team_members WHERE  `user_id` = ?  AND `team_id` =?');
+                $stmt->bind_param("ii", $user, $data['id']);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+    }
 }

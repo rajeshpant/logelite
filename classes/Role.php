@@ -54,7 +54,7 @@ class Role extends DB
         if($is_access){
             return $row['is_access'] ?? 0;
         } else {
-            return $row['user_id'] ?? 0;
+            return $row['id'] ?? 0;
         }
     }
     public static function getAccess($role_id){

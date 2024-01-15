@@ -98,4 +98,25 @@ class Task extends DB
         $stmt->bind_param("ssi", $comment, $files, $id); 
         $stmt->execute();
     }
+    public static function assignTeam($data){
+        $team_id = self::getTaskTeam($data['id']);
+        $del_team = array_diff($team_id, $data['team']);
+        $add_team = array_diff($data['team'], $team_id);
+        if(!empty($add_team)){
+            foreach($add_team as $team){
+                $stmt = DB::$connection->prepare('INSERT INTO team_tasks (`team_id`, `task_id`) VALUES (?, ?)');
+                $stmt->bind_param("ii", $team, $data['id']);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+        if(!empty($del_team)){
+            foreach($del_team as $team){
+                $stmt = DB::$connection->prepare('DELETE FROM team_tasks WHERE  `team_id` = ?  AND `task_id` =?');
+                $stmt->bind_param("ii", $team, $data['id']);
+                $stmt->execute();
+                $stmt->close();
+            }
+        }
+    }
 }

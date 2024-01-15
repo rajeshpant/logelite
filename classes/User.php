@@ -57,4 +57,21 @@ class User extends DB
         $stmt->execute();
         $stmt->close();
     }
+
+    public static function updateUserStaus($id, $status){
+        $stmt = DB::$connection->prepare('UPDATE users SET `status` = ?, modified= now() WHERE id = ?');
+        $stmt->bind_param("ii", $status, $id);  
+        $stmt->execute();
+    }
+
+    public static function getActiveUser(){ 
+        $stmt = DB::$connection->prepare('SELECT * FROM users WHERE `status` = 1');
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $results = [];
+        while($row = $result->fetch_assoc()){
+            $results[] = $row;
+        }
+        return $results;
+    }
 }

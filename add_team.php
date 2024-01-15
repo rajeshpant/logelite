@@ -1,6 +1,7 @@
 <?php 
 $page_title = !empty($_GET['id']) ? 'Edit Team' : 'Add Team';
 include('config.php');
+hasAccess('add_team');
 if(!empty($_POST)){
     Team::saveTeam($_POST);
     header('location: teams.php');
@@ -11,7 +12,7 @@ if(!empty($_POST)){
 include('header.php');
 include('header.inc'); 
 include('left.inc');
-$users = User::getUser();
+$users = User::getActiveUser();
 ?>
 <main id="main" class="main">
     <div class="pagetitle">

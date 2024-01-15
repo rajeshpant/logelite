@@ -1,6 +1,7 @@
 <?php 
 $page_title = !empty($_GET['id']) ? 'Edit User' : 'Add User';
 include('config.php');
+hasAccess('add_user');
 if(!empty($_POST)){
     User::saveUser($_POST);
     header('location: users.php');

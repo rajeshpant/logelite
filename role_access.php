@@ -1,6 +1,7 @@
 <?php 
 $page_title = 'Role Access';
 include('config.php');
+hasAccess('role_access');
 if(!empty($_POST)){
     Role::assignAccess($_POST);
 } else if(!empty($_GET['role'])){

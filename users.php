@@ -1,11 +1,16 @@
 <?php 
 $page_title = 'User List';
 include('config.php');
+hasAccess('user_list');
 $results = User::getUser();
 if(!empty($_POST['user_id'])){
     User::deleteUser($_POST['user_id']);
     echo 1;
     die;
+} if(isset($_POST['status'])){
+  User::updateUserStaus($_POST['id'], $_POST['status']);
+  echo 1;
+  die;
 }
 include('header.php');
 include('header.inc'); 
@@ -36,6 +41,7 @@ include('left.inc');
                 <th>Email</th>
                 <th>Gender</th>
                 <th>Role</th>
+                <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -50,6 +56,7 @@ include('left.inc');
                 <td><?php echo $result['email'];?></td>
                 <td><?php echo $result['gender'];?></td>
                 <td><?php echo $result['role'];?></td>
+                <td><a href="javascript:" onclick="update_status('<?php echo  ($result['status']==1 ? 0 : 1) ?>', '<?php echo $result['id'] ?>')"><?php echo ($result['status']==1) ? 'Active': 'Inactive';?></a></td>
                 <td><a href="add_user.php?id=<?php echo $result['id'];?>">Edit</a> | <a href="javascript:" onclick="delete_user(<?php echo $result['id'];?>)">Delete</a></td>
               </tr>
               <?php } } ?>
@@ -72,6 +79,18 @@ include('left.inc');
         });
         res.then(res => res.json()).then(data => {
             location.reload();
+        })
+    }
+    function update_status(status, id){
+        var formData = new FormData();
+        formData.append('id', id);
+        formData.append('status', status);
+        const res = fetch("users.php", {
+            method: "POST",
+            body: formData
+        });
+        res.then(res => res.json()).then(data => {
+           location.reload();
         })
     }
 </script>

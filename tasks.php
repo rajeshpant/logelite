@@ -1,6 +1,7 @@
 <?php 
 $page_title = 'Task List';
 include('config.php');
+hasAccess('task_list');
 $user_id = $_SESSION['user']['id'];
 if($_SESSION['user']['role_id']==3){
   $results = Task::getTaskByUser($user_id);
@@ -22,7 +23,14 @@ if(isset($_FILES['files'])){
     Task::updateStatus($_POST['id'], $_POST['status']);
     echo 1;
     die;
+} else if(isset($_POST['assign_task_id'])){
+  echo json_encode(Task::getTaskTeam($_POST['assign_task_id']));
+  die;
+} else if(isset($_POST['id'])){
+  Task::assignTeam($_POST);
+  header('location: tasks.php');
 } 
+$teams =  Team::getTeam();
 include('header.php');
 include('header.inc'); 
 include('left.inc');
@@ -77,14 +85,16 @@ include('left.inc');
                     <?php echo $task_status[$result['status']]; ?> <a href="javascript:" onclick="update_status(<?php echo $result['id'];?>, 1, 0)">Complete Task</a>
                     <?php } } else { ?>
                       Completed
-                      <?php } ?>
-                  
+                      <?php } ?>                  
                 </td>
                 <td>
-                  <?php if(Role::checkAccess($_SESSION['user']['role_id'], 'task_edit', 1)) { ?>
+                <?php if($_SESSION['user']['role_id'] == 1 || Role::checkAccess($_SESSION['user']['role_id'], 'assign_team_task', 1)) { ?>
+                    <a href="javascript:" onclick="assign_team(<?php echo $result['id'];?>)">Assign Team</a> |
+                  <?php } ?>
+                  <?php if($_SESSION['user']['role_id'] == 1 || Role::checkAccess($_SESSION['user']['role_id'], 'task_edit', 1)) { ?>
                     <a href="add_task.php?id=<?php echo $result['id'];?>">Edit</a> |
                   <?php } ?>
-                  <?php if(Role::checkAccess($_SESSION['user']['role_id'], 'delete_task', 1)) { ?>
+                  <?php if($_SESSION['user']['role_id'] == 1 || Role::checkAccess($_SESSION['user']['role_id'], 'delete_task', 1)) { ?>
                     <a href="javascript:" onclick="delete_task(<?php echo $result['id'];?>)">Delete</a>
                   <?php } ?>
                   </td>
@@ -125,6 +135,38 @@ include('left.inc');
       </div>
     </div>
   </div>
+
+  <div class="modal fade" id="assignTeam" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Assign Member</h5>
+          <button type="button" class="btn-close assign_close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form method="post" enctype="multipart/form-data" id="uploadFile" action="tasks.php">
+          <input type="hidden" id="assign_task_id" name="id" />
+        <div class="modal-body">
+          <div class="row">          <h5 class="modal-title">Teams</h5>
+            <?php foreach($teams as $key=>$val) { ?>
+              <div class="col-3">
+                  <div class="form-check">
+                      <input class="form-check-input accecc_chk" type="checkbox" name="team[]" id="<?php echo $val['id'] ?>" value="<?php echo $val['id'] ?>" />
+                      <label class="form-check-label" for="<?php echo $val['id'] ?>">
+                          <?php echo ucfirst($val['name']) ?>
+                      </label>
+                  </div>
+              </div>  
+            <?php } ?>
+          </div>        
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary assign_close_btn" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" onclick="add_comment()">Save changes</button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
 <script>
     const delete_task = (id) => {
         var formData = new FormData();
@@ -140,7 +182,10 @@ include('left.inc');
     
 var span = document.getElementsByClassName("close")[0];
 var close_btn =document.getElementsByClassName("close_btn")[0];
+var assign_span = document.getElementsByClassName("assign_close")[0];
+var assign_close_btn =document.getElementsByClassName("assign_close_btn")[0];
 var modal = document.getElementById("completeTask");
+var assign_modal = document.getElementById("assignTeam");
 span.onclick = function() {
   modal.style.display = "none";
   modal.classList.remove("show");
@@ -148,6 +193,14 @@ span.onclick = function() {
 close_btn.onclick= function(){
     modal.style.display = "none";
     modal.classList.remove("show");
+}
+assign_span.onclick = function() {
+  assign_modal.style.display = "none";
+  assign_modal.classList.remove("show");
+}
+assign_close_btn.onclick= function(){
+  assign_modal.style.display = "none";
+  assign_modal.classList.remove("show");
 }
     function update_status(id, status, is_popup = 1){
       if(status == 1 && is_popup ==1){
@@ -199,11 +252,26 @@ function handleSubmit(event) {
   } else {
     url.search = searchParams;
   }
-
   fetch(url, fetchOptions);
-
   event.preventDefault();
   location.reload();
+}
+function assign_team(id){
+    var modal = document.getElementById("assignTeam");
+    modal.style.display = "block";
+    modal.classList.add("show");
+    document.getElementById('assign_task_id').value=id;
+    var formData = new FormData();
+    formData.append('assign_task_id', id);
+    const res = fetch("tasks.php", {
+        method: "POST",
+        body: formData
+    });
+    res.then(res => res.json()).then(data => {
+      for (val of data) {
+          document.getElementById(val).checked =true;
+      }
+    })
 }
 </script>
  <?php include('footer.php');
